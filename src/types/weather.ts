@@ -4,7 +4,7 @@ export interface CurrentWeather {
   maxTemperatureC: number | null;
   apparentTemperatureC: number | null;
   windSpeedKmh: number | null;
-  windDirectionDegrees: number | null;
+  windDirection: string | null;
   relativeHumidityPercent: number | null;
   pressureHpa: number | null;
   description: string | null;
@@ -18,8 +18,10 @@ export interface DailyForecast {
   minTemperatureC: number | null;
   maxTemperatureC: number | null;
   windSpeedKmh: number | null;
-  windDirectionDegrees: number | null;
-  relativeHumidityPercent: number | null;
+  windSpeedDescription: string | null;
+  windDirection: string | null;
+  minRelativeHumidityPercent: number | null;
+  maxRelativeHumidityPercent: number | null;
   description: string | null;
   sunrise: string | null;
   sunset: string | null;
