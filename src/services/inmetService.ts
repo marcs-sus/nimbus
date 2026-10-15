@@ -2,7 +2,7 @@ import type { SearchService } from "./searchService";
 import type { Location } from "../types/location";
 import type { DailyForecast, WeatherData } from "../types/weather";
 
-const apiUrl = "https://apiprevmet3.inmet.gov.br/previsao/";
+const INMET_API_URL = "https://apiprevmet3.inmet.gov.br/previsao/";
 
 interface InmetPeriod {
   temp_min?: number | string | null;
@@ -112,7 +112,7 @@ export class InmetService implements SearchService {
       throw new Error("An IBGE municipality code is required for INMET");
     }
 
-    const response = await fetch(apiUrl + location.ibgeCode);
+    const response = await fetch(INMET_API_URL + location.ibgeCode);
 
     if (!response.ok) {
       throw new Error(`INMET request failed: ${response.status}`);
