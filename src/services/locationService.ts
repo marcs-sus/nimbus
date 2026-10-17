@@ -5,6 +5,9 @@ const IBGE_API_URL =
 
 const NOMINATIM_API_URL = "https://nominatim.openstreetmap.org/search?";
 
+const NOMINATIM_REVERSE_API_URL =
+  "https://nominatim.openstreetmap.org/reverse?";
+
 interface IbgeMunicipality {
   "municipio-id": number;
   "municipio-nome": string;
@@ -56,6 +59,132 @@ async function getMunicipalities(): Promise<IbgeMunicipality[]> {
 interface NominatimResult {
   lat: string;
   lon: string;
+}
+
+interface NominatimReverseResponse {
+  address?: {
+    municipality?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    county?: string;
+    state?: string;
+    country_code?: string;
+    "ISO3166-2-lvl4"?: string;
+  };
+}
+
+export async function findCurrentMunicipality(): Promise<Location> {
+  const coordinates = await new Promise<{
+    latitude: number;
+    longitude: number;
+  }>((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Geolocation is not supported by this browser."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        const message =
+          error.code === 1
+            ? "Location permission was denied. You can search for a municipality instead."
+            : error.code === 3
+              ? "Location request timed out. Please try again."
+              : "Unable to determine your location. Please try again.";
+
+        reject(new Error(message));
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
+      },
+    );
+  });
+
+  await waitForNominatimSlot();
+
+  const params = new URLSearchParams({
+    lat: String(coordinates.latitude),
+    lon: String(coordinates.longitude),
+    format: "jsonv2",
+    addressdetails: "1",
+    zoom: "10",
+    layer: "address",
+    "accept-language": "pt-BR",
+  });
+
+  const response = await fetch(NOMINATIM_REVERSE_API_URL + params);
+
+  if (!response.ok) {
+    throw new Error(`Nominatim request failed: ${response.status}`);
+  }
+
+  const result = (await response.json()) as NominatimReverseResponse;
+  const address = result.address;
+
+  if (address?.country_code?.toLowerCase() !== "br") {
+    throw new Error(
+      "Your location could not be identified as being in Brazil.",
+    );
+  }
+
+  const stateCode = address["ISO3166-2-lvl4"]?.match(/^BR-([A-Z]{2})$/)?.[1];
+
+  const candidates = [
+    address.municipality,
+    address.city,
+    address.town,
+    address.village,
+    address.county,
+  ].filter((name): name is string => Boolean(name?.trim()));
+
+  const municipalities = await getMunicipalities();
+  let ambiguousMatch = false;
+
+  for (const candidate of candidates) {
+    const normalizedName = normalizeSearchText(candidate);
+
+    const matches = municipalities.filter(
+      (municipality) =>
+        normalizeSearchText(municipality["municipio-nome"]) ===
+          normalizedName &&
+        (!stateCode || municipality["UF-sigla"] === stateCode),
+    );
+
+    if (matches.length === 1) {
+      const municipality = matches[0];
+
+      return {
+        name: municipality["municipio-nome"],
+        state: municipality["UF-sigla"],
+        ibgeCode: String(municipality["municipio-id"]),
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
+      };
+    }
+
+    if (matches.length > 1) {
+      ambiguousMatch = true;
+    }
+  }
+
+  if (ambiguousMatch) {
+    throw new Error(
+      "Your location matched multiple municipalities. Please search by municipality name instead.",
+    );
+  }
+
+  throw new Error(
+    "Could not match your location to an IBGE municipality. Please search by municipality name instead.",
+  );
 }
 
 export async function searchMunicipalities(query: string): Promise<Location[]> {
