@@ -4,8 +4,10 @@ export interface CurrentWeather {
   maxTemperatureC: number | null;
   apparentTemperatureC: number | null;
   windSpeedKmh: number | null;
+  windSpeedDescription: string | null;
   windDirection: string | null;
-  relativeHumidityPercent: number | null;
+  minRelativeHumidityPercent: number | null;
+  maxRelativeHumidityPercent: number | null;
   pressureHpa: number | null;
   description: string | null;
   sunrise: string | null;

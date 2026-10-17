@@ -1,6 +1,10 @@
 import type { SearchService } from "./searchService";
 import type { Location } from "../types/location";
-import type { DailyForecast, WeatherData } from "../types/weather";
+import type {
+  CurrentWeather,
+  DailyForecast,
+  WeatherData,
+} from "../types/weather";
 
 const INMET_API_URL = "https://apiprevmet3.inmet.gov.br/previsao/";
 
@@ -13,6 +17,7 @@ interface InmetPeriod {
   umidade_max?: number | string | null;
   tempo?: string | null;
   resumo?: string | null;
+  estacao?: string | null;
   nascer?: string | null;
   ocaso?: string | null;
 }
@@ -22,6 +27,10 @@ interface InmetDay extends InmetPeriod {
   tarde?: InmetPeriod;
   noite?: InmetPeriod;
 }
+
+type InmetPeriodKey = "manha" | "tarde" | "noite";
+
+const INMET_PERIOD_ORDER: InmetPeriodKey[] = ["manha", "tarde", "noite"];
 
 type InmetResponse = Record<string, Record<string, InmetDay>>;
 
@@ -106,6 +115,55 @@ function firstText(
   return null;
 }
 
+function periodKeyForHour(hour: number): InmetPeriodKey {
+  if (hour < 12) {
+    return "manha";
+  }
+
+  if (hour < 18) {
+    return "tarde";
+  }
+
+  return "noite";
+}
+
+function selectPeriod(day: InmetDay, hour: number): InmetPeriod {
+  const preferred = periodKeyForHour(hour);
+  const order = [
+    preferred,
+    ...INMET_PERIOD_ORDER.filter((key) => key !== preferred),
+  ];
+
+  for (const key of order) {
+    const period = day[key];
+
+    if (period) {
+      return period;
+    }
+  }
+
+  return day;
+}
+
+function toCurrentWeather(period: InmetPeriod): CurrentWeather {
+  return {
+    temperatureC: null,
+    minTemperatureC: toNumber(period.temp_min),
+    maxTemperatureC: toNumber(period.temp_max),
+    apparentTemperatureC: null,
+    windSpeedKmh: null,
+    windSpeedDescription: period.int_vento?.trim() || null,
+    windDirection: period.dir_vento?.trim() || null,
+    minRelativeHumidityPercent: toNumber(period.umidade_min),
+    maxRelativeHumidityPercent: toNumber(period.umidade_max),
+    pressureHpa: null,
+    description: period.resumo?.trim() || period.tempo?.trim() || null,
+    sunrise: period.nascer?.trim() || null,
+    sunset: period.ocaso?.trim() || null,
+    season: period.estacao?.trim() || null,
+  };
+}
+
 export class InmetService implements SearchService {
   async getWeather(location: Location): Promise<WeatherData> {
     if (!location.ibgeCode) {
@@ -138,6 +196,17 @@ export class InmetService implements SearchService {
       )
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 5);
+
+    const todayEntry = dates.find((item) => item.date === today);
+
+    const current = todayEntry
+      ? toCurrentWeather(
+          selectPeriod(
+            municipalityForecast[todayEntry.rawDate],
+            new Date().getHours(),
+          ),
+        )
+      : null;
 
     const forecast: DailyForecast[] = dates.map(({ rawDate, date }) => {
       const day = municipalityForecast[rawDate];
@@ -179,7 +248,7 @@ export class InmetService implements SearchService {
     });
 
     return {
-      current: null,
+      current,
       forecast,
     };
   }
