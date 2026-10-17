@@ -134,7 +134,7 @@ export class InmetService implements SearchService {
       }))
       .filter(
         (item): item is { rawDate: string; date: string } =>
-          item.date !== null && item.date > today,
+          item.date !== null && item.date >= today,
       )
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, 5);
@@ -146,16 +146,14 @@ export class InmetService implements SearchService {
         (period): period is InmetPeriod => period !== undefined,
       );
 
-      // Later forecast dates can contain daily fields directly.
-      const records = periods.length > 0 ? periods : [day];
+      const isPeriodBased = periods.length > 0;
+      const records = isPeriodBased ? periods : [day];
 
       const descriptions = [
         ...new Set(
           records
-            .map((period) => period.tempo?.trim() || period.resumo?.trim())
-            .filter((description): description is string =>
-              Boolean(description),
-            ),
+            .map((period) => period.resumo?.trim() || period.tempo?.trim())
+            .filter((value): value is string => Boolean(value)),
         ),
       ];
 
