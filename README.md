@@ -1,32 +1,79 @@
-# React + TypeScript + Vite
+# nimbus
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+## Summary
 
-Currently, two official plugins are available:
+Nimbus is a single-page weather forecast web app (pt-BR) for Brazilian municipalities. It displays current conditions and a five-day forecast for the selected location, with a high-contrast dark mode.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Meteorological data comes from **INMET**, consumed through a shared `SearchService` contract so the UI is independent of the provider.
 
-## React Compiler
+Locations are resolved through:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **IBGE Localidades**, municipality name search and IBGE municipality codes;
+- **Nominatim (OpenStreetMap)**, reverse geocoding of device coordinates to a Brazilian municipality.
 
-## Expanding the Oxlint configuration
+The weather provider is selected once at the composition boundary via the `VITE_WEATHER_PROVIDER` environment variable.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Installation
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Prerequisites: Node.js `^20.19.0 || >=22.12.0` (required by Vite, `@vitejs/plugin-react`, and oxlint) and npm.
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Configure the environment (optional; defaults to "inmet")
+cp .env.example .env.local
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+`VITE_WEATHER_PROVIDER` selects the weather backend:
+
+- `inmet`, implemented (default);
+- `open-meteo`, reserved for the Open-Meteo adapter (_not yet implemented_);
+
+`.env.local` is git-ignored.
+
+### Scripts
+
+```bash
+npm run dev       # start the Vite dev server
+npm run build     # typecheck (tsc -b) and build for production
+npm run preview   # preview the production build
+npm run lint      # run oxlint
+```
+
+## Technologies
+
+- **React** 19 (`react`, `react-dom`)
+- **TypeScript** ~6.0
+- **Vite** 8 (with `@vitejs/plugin-react`)
+- **Tailwind CSS** 4 (via `@tailwindcss/vite`)
+- **oxlint** for linting
+- **npm** for dependency management
+
+External services: INMET (`apiprevmet3.inmet.gov.br`), IBGE Localidades, and Nominatim (OpenStreetMap).
+
+## Functional Requirements
+
+### Location
+
+- Search Brazilian municipalities by name (minimum 2 characters) using the IBGE Localidades dataset; results show municipality name, state, and IBGE code.
+- Determine the current municipality from device coordinates, with explicit browser permission, by reverse geocoding through Nominatim and matching the result to an IBGE municipality. Only locations within Brazil are accepted.
+- Select exactly one municipality at a time; selecting a new one replaces the previous selection.
+
+### Weather
+
+- Load meteorological data from INMET using the selected municipality's IBGE code.
+- Display **current conditions** for the selected municipality: minimum temperature, maximum temperature, apparent (feels-like) temperature, wind, relative humidity, atmospheric pressure, weather summary, sunrise, sunset, and current season. Current conditions reflect the INMET forecast period (morning/afternoon/evening) matching the time of the request.
+- Display a **five-day forecast** (the current day plus the next four), with per day: minimum temperature, maximum temperature, wind, relative humidity, general conditions, sunrise, and sunset.
+- Normalize both INMET response shapes, period-based objects (`manha`/`tarde`/`noite`) and single daily objects, into provider-independent application types before they reach the UI.
+- Values not supplied by INMET (apparent temperature, numeric wind speed, atmospheric pressure, and a single relative-humidity value) are shown as unavailable (`—`) and are never fabricated; relative humidity is presented as a min–max range.
+
+### Provider abstraction
+
+- Expose weather and location operations through a shared `SearchService` contract; the React UI must not depend on INMET-specific response formats.
+- Select the active provider once, via `VITE_WEATHER_PROVIDER` (`inmet` is implemented; `open-meteo` is a stub, `[functional requirements to be defined]`).
+
+### Interface
+
+- Provide loading, error (with retry), and empty states.
+- Provide a high-contrast dark mode with semantic markup, keyboard accessibility, and readable contrast.
