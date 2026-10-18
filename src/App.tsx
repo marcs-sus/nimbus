@@ -25,14 +25,10 @@ function AppContent() {
   return (
     <div className={`relative min-h-screen w-full flex flex-col ${pageClass}`}>
       {/* Fundo Dinâmico com Gradients CSS e Animações Sutis */}
-      <WeatherBackground
-        description={weather?.current?.description ?? null}
-        sunrise={weather?.current?.sunrise}
-        sunset={weather?.current?.sunset}
-      />
+      <WeatherBackground description={weather?.current?.description ?? null} />
 
       {/* Container Principal Mobile-First Centralizado em Telas Maiores */}
-      <main className="mx-auto flex-1 w-full max-w-xl px-4 py-4 sm:px-6 flex flex-col justify-between">
+      <main className="mx-auto flex-1 w-full max-w-md px-4 py-4 flex flex-col justify-between">
         <div className="space-y-4">
           {/* 1. Header (Localização clicável + Contraste + Menu de Opções) */}
           <Header

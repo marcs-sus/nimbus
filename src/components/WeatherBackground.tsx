@@ -2,198 +2,113 @@ import { useAppearance } from "../hooks/useAppearance";
 
 interface WeatherBackgroundProps {
   description: string | null;
-  sunrise?: string | null;
-  sunset?: string | null;
 }
 
-type WeatherType =
-  | "clear-day"
-  | "clear-night"
-  | "clouds-day"
-  | "clouds-night"
-  | "rain"
-  | "storm"
-  | "fog"
-  | "default";
+type Kind = "clear" | "clouds" | "rain" | "storm" | "fog";
 
-function isNightTime(sunrise?: string | null, sunset?: string | null): boolean {
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-  if (sunrise && sunset) {
-    const parseTime = (timeStr: string) => {
-      const match = timeStr.match(/(\d{1,2}):(\d{2})/);
-      if (match) {
-        return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
-      }
-      return null;
-    };
-
-    const riseMinutes = parseTime(sunrise);
-    const setMinutes = parseTime(sunset);
-
-    if (riseMinutes !== null && setMinutes !== null) {
-      return currentMinutes < riseMinutes || currentMinutes >= setMinutes;
-    }
-  }
-
-  const hour = now.getHours();
-  return hour < 6 || hour >= 18;
-}
-
-function getWeatherType(
-  description: string | null,
-  isNight: boolean,
-): WeatherType {
-  if (!description) {
-    return isNight ? "clear-night" : "clear-day";
-  }
-
-  const text = description
+function getKind(description: string | null): Kind {
+  const text = (description ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-  if (
-    text.includes("tempestade") ||
-    text.includes("trovoada") ||
-    text.includes("raio")
-  ) {
-    return "storm";
-  }
-
-  if (
-    text.includes("chuva") ||
-    text.includes("chuvisco") ||
-    text.includes("chuvoso") ||
-    text.includes("pancada")
-  ) {
-    return "rain";
-  }
-
-  if (text.includes("nevoeiro") || text.includes("nevoa")) {
-    return "fog";
-  }
-
-  if (
-    text.includes("nublado") ||
-    text.includes("encoberto") ||
-    text.includes("nuvens") ||
-    text.includes("parcial")
-  ) {
-    return isNight ? "clouds-night" : "clouds-day";
-  }
-
-  if (
-    text.includes("sol") ||
-    text.includes("claro") ||
-    text.includes("ensolarado") ||
-    text.includes("limpo")
-  ) {
-    return isNight ? "clear-night" : "clear-day";
-  }
-
-  return isNight ? "clear-night" : "clear-day";
+  if (/tempestade|trovoada|raio/.test(text)) return "storm";
+  if (/chuva|chuvisco|chuvoso|pancada|garoa/.test(text)) return "rain";
+  if (/nevoeiro|nevoa/.test(text)) return "fog";
+  if (/nublado|encoberto|nuvens|parcial/.test(text)) return "clouds";
+  return "clear";
 }
 
-export function WeatherBackground({
-  description,
-  sunrise,
-  sunset,
-}: WeatherBackgroundProps) {
+const KINDS: Kind[] = ["clear", "clouds", "rain", "storm", "fog"];
+
+// Tema claro: quanto pior o tempo, mais escuro. Tema escuro: quanto pior, mais claro.
+const GRADIENTS: Record<Kind, string> = {
+  clear:
+    "from-[#f6fbff] via-[#cfeaff] to-[#8fcdf8] dark:from-[#131315] dark:via-[#1b1b1e] dark:to-[#242427]",
+  clouds:
+    "from-[#e9f1f8] via-[#c9dcee] to-[#a2c1dc] dark:from-[#1a1a1d] dark:via-[#232327] dark:to-[#2c2c31]",
+  fog: "from-[#f3f8fc] via-[#dbe7f1] to-[#bccfe0] dark:from-[#1d1d20] dark:via-[#27272b] dark:to-[#303035]",
+  rain: "from-[#d3e0ec] via-[#a4c0d8] to-[#7699b9] dark:from-[#222226] dark:via-[#2c2c31] dark:to-[#37373d]",
+  storm:
+    "from-[#bccddd] via-[#8fadc8] to-[#6d8fb0] dark:from-[#2a2a2f] dark:via-[#35353b] dark:to-[#414148]",
+};
+
+const DROPS = Array.from({ length: 18 }, (_, i) => ({
+  left: `${(i * 5.7 + 2) % 100}%`,
+  delay: `${(i * 0.37) % 1.6}s`,
+  duration: `${0.8 + (i % 4) * 0.2}s`,
+  height: 56 + (i % 3) * 18,
+}));
+
+export function WeatherBackground({ description }: WeatherBackgroundProps) {
   const { highContrastDark } = useAppearance();
 
   if (highContrastDark) {
     return (
       <div
-        className="fixed inset-0 -z-10 bg-black pointer-events-none"
+        className="pointer-events-none fixed inset-0 -z-10 bg-black"
         aria-hidden="true"
       />
     );
   }
 
-  const isNight = isNightTime(sunrise, sunset);
-  const weatherType = getWeatherType(description, isNight);
-
-  const getGradient = () => {
-    switch (weatherType) {
-      case "clear-day":
-        return "from-sky-400 via-sky-300 to-amber-200 dark:from-sky-800 dark:via-blue-900 dark:to-indigo-950";
-      case "clear-night":
-        return "from-slate-950 via-indigo-950 to-slate-900";
-      case "clouds-day":
-        return "from-slate-400 via-sky-300 to-slate-300 dark:from-slate-800 dark:via-slate-900 dark:to-slate-950";
-      case "clouds-night":
-        return "from-slate-900 via-slate-950 to-zinc-950";
-      case "rain":
-        return "from-slate-700 via-blue-950 to-slate-900";
-      case "storm":
-        return "from-slate-950 via-indigo-950 to-purple-950";
-      case "fog":
-        return "from-slate-400 via-zinc-400 to-stone-300 dark:from-slate-800 dark:via-zinc-900 dark:to-slate-900";
-      default:
-        return "from-sky-400 via-blue-500 to-indigo-600 dark:from-slate-900 dark:via-indigo-950 dark:to-slate-950";
-    }
-  };
+  const kind = getKind(description);
+  const raining = kind === "rain" || kind === "storm";
 
   return (
     <div
-      className={`fixed inset-0 -z-10 overflow-hidden bg-gradient-to-br ${getGradient()} transition-colors duration-1000 pointer-events-none`}
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
       aria-hidden="true"
     >
-      {/* Sol radiante animado em dias claros */}
-      {weatherType === "clear-day" && (
-        <div className="absolute -top-12 -right-12 h-80 w-80 rounded-full bg-amber-300/40 blur-3xl animate-sun-glow dark:bg-amber-500/20" />
+      {/* Camadas de degradê com crossfade suave entre climas */}
+      {KINDS.map((k) => (
+        <div
+          key={k}
+          className={`absolute inset-0 bg-linear-to-b transition-opacity duration-[1600ms] ease-in-out ${GRADIENTS[k]} ${
+            k === kind ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+      {/* Massas fluidas: dão o que refratar ao vidro */}
+      <div className="animate-blob-a absolute -top-28 -left-28 h-[28rem] w-[28rem] rounded-full bg-white/75 blur-3xl dark:bg-white/[0.06]" />
+      <div className="animate-blob-b absolute top-1/3 -right-36 h-[26rem] w-[26rem] rounded-full bg-sky-300/60 blur-3xl dark:bg-white/[0.05]" />
+      <div className="animate-blob-c absolute -bottom-36 left-1/4 h-[30rem] w-[30rem] rounded-full bg-sky-200/80 blur-3xl dark:bg-zinc-300/[0.06]" />
+
+      {kind === "clear" && (
+        <div className="animate-sun-glow absolute top-12 right-10 h-24 w-24 rounded-full bg-white shadow-[0_0_90px_36px_rgba(255,255,255,0.85)] dark:opacity-40" />
       )}
 
-      {/* Lua / Brilho suave em noites claras */}
-      {weatherType === "clear-night" && (
+      {(kind === "clouds" || kind === "rain" || kind === "storm") && (
         <>
-          <div className="absolute top-12 right-16 h-36 w-36 rounded-full bg-sky-200/20 blur-2xl" />
-          <div className="absolute top-16 right-20 h-16 w-16 rounded-full bg-slate-100/40 blur-sm" />
-          {/* Estrelas sutis com pontos pontilhados */}
-          <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px]" />
+          <div className="animate-cloud-slow absolute top-[12%] -left-1/4 h-52 w-[150%] rounded-full bg-white/55 blur-3xl dark:bg-white/10" />
+          <div className="animate-cloud-reverse absolute top-[38%] -right-1/4 h-60 w-[140%] rounded-full bg-white/40 blur-3xl dark:bg-white/5" />
         </>
       )}
 
-      {/* Nuvens dinâmicas em movimento */}
-      {(weatherType === "clouds-day" || weatherType === "clouds-night") && (
+      {raining &&
+        DROPS.map((drop, i) => (
+          <div
+            key={i}
+            className="animate-rain absolute -top-24 w-px bg-linear-to-b from-transparent to-sky-700/45 dark:to-white/60"
+            style={{
+              left: drop.left,
+              height: drop.height,
+              animationDelay: drop.delay,
+              animationDuration: drop.duration,
+            }}
+          />
+        ))}
+
+      {kind === "storm" && (
+        <div className="animate-lightning absolute inset-0 bg-white/50" />
+      )}
+
+      {kind === "fog" && (
         <>
-          <div className="absolute top-1/4 -left-1/4 h-64 w-[150%] rounded-full bg-white/20 dark:bg-white/5 blur-3xl animate-cloud-slow" />
-          <div className="absolute top-1/2 -right-1/4 h-72 w-[140%] rounded-full bg-slate-100/25 dark:bg-black/30 blur-3xl animate-cloud-reverse" />
+          <div className="animate-fog absolute top-1/4 -left-10 h-48 w-[120%] rounded-full bg-white/70 blur-3xl dark:bg-white/10" />
+          <div className="animate-fog absolute top-3/5 -left-10 h-56 w-[120%] rounded-full bg-white/60 blur-3xl [animation-direction:reverse] dark:bg-white/10" />
         </>
       )}
-
-      {/* Chuva e partículas de água caindo */}
-      {(weatherType === "rain" || weatherType === "storm") && (
-        <>
-          <div className="absolute inset-0 bg-black/15" />
-          {/* Gotas de chuva CSS puro */}
-          <div className="absolute inset-0 opacity-40">
-            <div className="absolute top-0 left-1/4 h-24 w-0.5 bg-gradient-to-b from-transparent to-white animate-rain-1" />
-            <div className="absolute top-0 left-1/2 h-28 w-0.5 bg-gradient-to-b from-transparent to-white animate-rain-2" />
-            <div className="absolute top-0 left-3/4 h-20 w-0.5 bg-gradient-to-b from-transparent to-white animate-rain-3" />
-            <div className="absolute top-0 left-1/6 h-22 w-0.5 bg-gradient-to-b from-transparent to-white animate-rain-2" />
-            <div className="absolute top-0 left-5/6 h-26 w-0.5 bg-gradient-to-b from-transparent to-white animate-rain-1" />
-          </div>
-        </>
-      )}
-
-      {/* Relâmpagos para tempestades */}
-      {weatherType === "storm" && (
-        <div className="absolute inset-0 bg-indigo-100/30 dark:bg-purple-200/25 animate-lightning" />
-      )}
-
-      {/* Névoa / Nevoeiro */}
-      {weatherType === "fog" && (
-        <>
-          <div className="absolute inset-0 bg-white/30 dark:bg-black/40 blur-xl animate-fog" />
-          <div className="absolute inset-0 opacity-50 bg-[radial-gradient(#ffffff_2px,transparent_2px)] [background-size:16px_16px]" />
-        </>
-      )}
-
-      {/* Vinheta suave nos cantos para elegância visual */}
-      <div className="absolute inset-0 bg-radial from-transparent via-transparent to-black/25 dark:to-black/50" />
     </div>
   );
 }

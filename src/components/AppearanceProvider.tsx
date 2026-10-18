@@ -176,6 +176,11 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
     return () => mediaQuery.removeEventListener("change", listener);
   }, [theme, highContrastDark]);
 
+  // Efeito para sincronizar a classe de alto contraste (remove blur no CSS)
+  useEffect(() => {
+    document.documentElement.classList.toggle("high-contrast", highContrastDark);
+  }, [highContrastDark]);
+
   // Efeito para sincronizar tamanho da fonte
   useEffect(() => {
     const root = document.documentElement;
@@ -215,10 +220,10 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
       highContrastDark: false,
       toggle,
       pageClass:
-        "text-slate-900 dark:text-slate-100 selection:bg-sky-500 selection:text-white transition-colors duration-300",
+        "text-ink selection:bg-sky-300/60",
       surfaceClass:
-        "rounded-2xl border border-white/20 bg-white/15 dark:bg-black/25 backdrop-blur-xl shadow-lg shadow-black/5 text-slate-900 dark:text-white transition-all duration-300",
-      mutedTextClass: "text-slate-600 dark:text-slate-300",
+        "glass",
+      mutedTextClass: "text-ink-muted",
       theme,
       setTheme,
       viewMode,
@@ -230,7 +235,7 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
       decreaseFontSize,
       isGlassEnabled,
       glassSurfaceClass:
-        "rounded-2xl border border-white/20 bg-white/15 dark:bg-black/25 backdrop-blur-xl shadow-lg shadow-black/5 text-slate-900 dark:text-white transition-all duration-300",
+        "glass",
     };
   }, [
     highContrastDark,

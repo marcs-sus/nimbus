@@ -1,22 +1,13 @@
 import { useState } from "react";
-import {
-  CalendarDays,
-  ChevronDown,
-  ChevronUp,
-  Droplets,
-  Sunrise,
-  Sunset,
-  Wind,
-} from "lucide-react";
 import { useAppearance } from "../hooks/useAppearance";
 import {
   formatDate,
   formatHumidityRange,
-  formatTemperature,
   formatTime,
   formatWind,
 } from "../lib/format";
 import type { DailyForecast } from "../types/weather";
+import { shortTemp } from "../utils/temperature";
 import { getWeatherIcon } from "../utils/weatherIcons";
 
 interface ForecastListProps {
@@ -24,21 +15,38 @@ interface ForecastListProps {
 }
 
 export function ForecastList({ forecast }: ForecastListProps) {
-  const { mutedTextClass } = useAppearance();
+  const { surfaceClass, mutedTextClass } = useAppearance();
+
+  const mins = forecast
+    .map((d) => d.minTemperatureC)
+    .filter((v): v is number => v !== null);
+  const maxs = forecast
+    .map((d) => d.maxTemperatureC)
+    .filter((v): v is number => v !== null);
+  const weekMin = mins.length > 0 ? Math.min(...mins) : 0;
+  const weekMax = maxs.length > 0 ? Math.max(...maxs) : 0;
 
   return (
-    <section aria-labelledby="forecast-heading" className="w-full">
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <CalendarDays className="w-4 h-4 opacity-75" />
-        <h2 id="forecast-heading" className="text-sm font-bold tracking-tight">
-          Previsão para cinco dias
-        </h2>
-      </div>
+    <section
+      aria-labelledby="forecast-heading"
+      className={`animate-fade-up rounded-[28px] p-4 ${surfaceClass}`}
+    >
+      <h2
+        id="forecast-heading"
+        className="text-ink-muted mb-1 px-1 text-sm font-medium"
+      >
+        Previsão para 5 dias
+      </h2>
 
       {forecast.length > 0 ? (
-        <div className="flex flex-col gap-2.5">
+        <div className="divide-glass">
           {forecast.map((day) => (
-            <ForecastDayRow key={day.date} day={day} />
+            <ForecastDayRow
+              key={day.date}
+              day={day}
+              weekMin={weekMin}
+              weekMax={weekMax}
+            />
           ))}
         </div>
       ) : (
@@ -55,119 +63,98 @@ export const DailyForecastList = ForecastList;
 
 interface ForecastDayRowProps {
   day: DailyForecast;
+  weekMin: number;
+  weekMax: number;
 }
 
-function ForecastDayRow({ day }: ForecastDayRowProps) {
-  const { surfaceClass, mutedTextClass, viewMode, highContrastDark } =
-    useAppearance();
-  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
+function ForecastDayRow({ day, weekMin, weekMax }: ForecastDayRowProps) {
+  const { mutedTextClass, viewMode } = useAppearance();
+  const [override, setOverride] = useState<boolean | null>(null);
 
-  // No modo detalhado expande por padrão, ou se o usuário clicou para ver
-  const isExpanded = viewMode === "detailed" || isManuallyExpanded;
+  const isExpanded = override ?? viewMode === "detailed";
+
+  const span = weekMax - weekMin;
+  const lo = day.minTemperatureC ?? weekMin;
+  const hi = day.maxTemperatureC ?? weekMax;
+  const left = span > 0 ? ((lo - weekMin) / span) * 100 : 0;
+  const width = span > 0 ? Math.max(((hi - lo) / span) * 100, 12) : 100;
 
   return (
-    <article
-      className={`rounded-2xl p-4 transition-all duration-200 overflow-hidden ${surfaceClass}`}
-    >
-      {/* Linha Principal do Dia */}
+    <article className="py-3">
       <button
         type="button"
-        onClick={() => setIsManuallyExpanded((prev) => !prev)}
+        onClick={() => setOverride(!isExpanded)}
         aria-expanded={isExpanded}
-        className="w-full flex items-center justify-between gap-3 text-left focus:outline-none"
+        className="flex w-full items-center gap-3 text-left"
       >
-        {/* Dia da semana e ícone */}
-        <div className="flex items-center gap-3 min-w-[130px] sm:min-w-[170px]">
-          <div className="shrink-0">
-            {getWeatherIcon(day.description, false, "w-6 h-6")}
-          </div>
-          <div>
-            <h3 className="font-bold text-sm sm:text-base capitalize">
-              {formatDate(day.date)}
-            </h3>
-            <p className={`text-xs truncate max-w-[140px] sm:max-w-[200px] ${mutedTextClass}`}>
-              {day.description ?? "Sem descrição"}
-            </p>
-          </div>
-        </div>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-base font-semibold capitalize">
+            {formatDate(day.date)}
+          </span>
+          <span className={`block truncate text-sm ${mutedTextClass}`}>
+            {day.description ?? "Sem descrição"}
+          </span>
+        </span>
 
-        {/* Faixa de temperatura Mín e Máx */}
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="text-right">
-            <span className="font-extrabold text-sm sm:text-base text-red-500 dark:text-red-400">
-              {formatTemperature(day.maxTemperatureC)}
-            </span>
-            <span className={`mx-1 text-xs ${mutedTextClass}`}>/</span>
-            <span className={`text-xs sm:text-sm font-semibold text-blue-500 dark:text-blue-400`}>
-              {formatTemperature(day.minTemperatureC)}
-            </span>
-          </div>
+        <span className="shrink-0 text-sky-600 dark:text-zinc-100">
+          {getWeatherIcon(day.description, false, "h-7 w-7")}
+        </span>
 
-          <div
-            className={`p-1 rounded-full transition-transform ${
-              isExpanded ? "rotate-180" : ""
-            }`}
-          >
-            {isExpanded ? (
-              <ChevronUp className="w-4 h-4 opacity-60" />
-            ) : (
-              <ChevronDown className="w-4 h-4 opacity-60" />
-            )}
-          </div>
-        </div>
+        <span className={`w-9 shrink-0 text-right text-base ${mutedTextClass}`}>
+          {shortTemp(day.minTemperatureC)}
+        </span>
+
+        <span className="range-track relative h-1.5 w-16 shrink-0 rounded-full">
+          <span
+            className="range-fill absolute inset-y-0 rounded-full"
+            style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%` }}
+          />
+        </span>
+
+        <span className="w-9 shrink-0 text-base font-semibold">
+          {shortTemp(day.maxTemperatureC)}
+        </span>
       </button>
 
-      {/* Detalhes Expandidos (Modo Detalhado ou clique) */}
-      {isExpanded && (
-        <div
-          className={`mt-4 pt-3 border-t grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs ${
-            highContrastDark ? "border-white" : "border-current/15"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Wind className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-            <div>
-              <p className={mutedTextClass}>Vento</p>
-              <p className="font-semibold truncate">
-                {formatWind(
-                  day.windSpeedKmh,
-                  day.windSpeedDescription,
-                  day.windDirection,
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Droplets className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <div>
-              <p className={mutedTextClass}>Umidade</p>
-              <p className="font-semibold">
-                {formatHumidityRange(
-                  day.minRelativeHumidityPercent,
-                  day.maxRelativeHumidityPercent,
-                )}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Sunrise className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <div>
-              <p className={mutedTextClass}>Nascer do sol</p>
-              <p className="font-semibold">{formatTime(day.sunrise)}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Sunset className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-            <div>
-              <p className={mutedTextClass}>Pôr do sol</p>
-              <p className="font-semibold">{formatTime(day.sunset)}</p>
-            </div>
-          </div>
+      <div
+        className={`grid transition-[grid-template-rows,opacity] duration-500 ease-out ${
+          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+        aria-hidden={!isExpanded}
+      >
+        <div className="overflow-hidden">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 pt-3 pl-0.5 text-sm">
+            <Info
+              label="Vento"
+              value={formatWind(
+                day.windSpeedKmh,
+                day.windSpeedDescription,
+                day.windDirection,
+              )}
+            />
+            <Info
+              label="Umidade"
+              value={formatHumidityRange(
+                day.minRelativeHumidityPercent,
+                day.maxRelativeHumidityPercent,
+              )}
+            />
+            <Info label="Nascer do sol" value={formatTime(day.sunrise)} />
+            <Info label="Pôr do sol" value={formatTime(day.sunset)} />
+          </dl>
         </div>
-      )}
+      </div>
     </article>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  const { mutedTextClass } = useAppearance();
+
+  return (
+    <div>
+      <dt className={mutedTextClass}>{label}</dt>
+      <dd className="font-medium">{value}</dd>
+    </div>
   );
 }
