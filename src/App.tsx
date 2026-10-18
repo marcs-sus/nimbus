@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { AppearanceProvider } from "./components/AppearanceProvider";
-import { LocationSearch } from "./components/LocationSearch";
+import { Header } from "./components/Header";
+import { SearchModal } from "./components/SearchModal";
+import { SettingsModal } from "./components/SettingsModal";
+import { WeatherBackground } from "./components/WeatherBackground";
 import { WeatherReport } from "./components/WeatherReport";
-import { buttonClass, useAppearance } from "./hooks/useAppearance";
+import { useAppearance } from "./hooks/useAppearance";
 import { useMunicipalitySearch } from "./hooks/useMunicipalitySearch";
 import { useWeather } from "./hooks/useWeather";
 import { weatherProvider } from "./services/weatherService";
@@ -9,57 +13,73 @@ import { weatherProvider } from "./services/weatherService";
 const sourceLabel = weatherProvider === "inmet" ? "INMET" : "Open-Meteo";
 
 function AppContent() {
-  const { highContrastDark, toggle, pageClass, mutedTextClass } =
-    useAppearance();
+  const { pageClass, mutedTextClass } = useAppearance();
   const search = useMunicipalitySearch();
   const { weather, isLoading, error, retry } = useWeather(
     search.selectedLocation,
   );
 
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
   return (
-    <main className={`min-h-screen w-full ${pageClass}`}>
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Nimbus</h1>
-            <p className={`mt-1 text-sm ${mutedTextClass}`}>
-              Previsão do tempo
-            </p>
-          </div>
+    <div className={`relative min-h-screen w-full flex flex-col ${pageClass}`}>
+      {/* Fundo Dinâmico com Gradients CSS e Animações Sutis */}
+      <WeatherBackground
+        description={weather?.current?.description ?? null}
+        sunrise={weather?.current?.sunrise}
+        sunset={weather?.current?.sunset}
+      />
 
-          <button
-            type="button"
-            aria-pressed={highContrastDark}
-            onClick={toggle}
-            className={buttonClass}
-          >
-            {highContrastDark ? "Modo claro" : "Modo escuro de alto contraste"}
-          </button>
-        </header>
+      {/* Container Principal Mobile-First Centralizado em Telas Maiores */}
+      <main className="mx-auto flex-1 w-full max-w-xl px-4 py-4 sm:px-6 flex flex-col justify-between">
+        <div className="space-y-4">
+          {/* 1. Header (Localização clicável + Contraste + Menu de Opções) */}
+          <Header
+            selectedLocation={search.selectedLocation}
+            onOpenSearch={() => setIsSearchModalOpen(true)}
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
+          />
 
-        <LocationSearch search={search} sourceLabel={sourceLabel} />
+          {/* 2 a 5. Conteúdo Meteorológico (Clima Atual, Horária, Detalhes, 5 Dias) */}
+          <WeatherReport
+            hasSelection={search.selectedLocation !== null}
+            weather={weather}
+            isLoading={isLoading}
+            error={error}
+            onRetry={retry}
+            onOpenSearch={() => setIsSearchModalOpen(true)}
+          />
+        </div>
 
-        <WeatherReport
-          hasSelection={search.selectedLocation !== null}
-          weather={weather}
-          isLoading={isLoading}
-          error={error}
-          onRetry={retry}
-        />
-
-        <footer className={`mt-8 text-xs ${mutedTextClass}`}>
+        {/* Rodapé com Atribuição OpenStreetMap (Preservado fielmente) */}
+        <footer className={`mt-10 mb-4 text-center text-xs ${mutedTextClass}`}>
           Geocodificação ©{" "}
           <a
             href="https://www.openstreetmap.org/copyright"
             target="_blank"
             rel="noreferrer"
-            className="underline"
+            className="underline hover:opacity-80 transition-opacity"
           >
             colaboradores do OpenStreetMap
           </a>
         </footer>
-      </div>
-    </main>
+      </main>
+
+      {/* Modal de Busca de Cidades (Design Liquid Glass) */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        search={search}
+        sourceLabel={sourceLabel}
+      />
+
+      {/* Modal de Configurações (Acessibilidade, Tema, Visão Detalhada) */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
+    </div>
   );
 }
 
