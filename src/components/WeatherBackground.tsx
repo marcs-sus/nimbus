@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useAppearance } from "../hooks/useAppearance";
 
 interface WeatherBackgroundProps {
@@ -33,12 +34,37 @@ const GRADIENTS: Record<Kind, string> = {
     "from-[#bccddd] via-[#8fadc8] to-[#6d8fb0] dark:from-[#2a2a2f] dark:via-[#35353b] dark:to-[#414148]",
 };
 
-const DROPS = Array.from({ length: 18 }, (_, i) => ({
-  left: `${(i * 5.7 + 2) % 100}%`,
-  delay: `${(i * 0.37) % 1.6}s`,
-  duration: `${0.8 + (i % 4) * 0.2}s`,
-  height: 56 + (i % 3) * 18,
-}));
+// Pseudo-aleatório determinístico (sem Math.random durante o render)
+const rand = (n: number) => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+// Três camadas de profundidade: longe (lenta, fraca) -> perto (rápida, forte)
+const LAYERS = [
+  { count: 30, duration: 1.8, width: 1, height: [24, 42], opacity: 0.28 },
+  { count: 22, duration: 1.2, width: 1, height: [42, 68], opacity: 0.5 },
+  { count: 14, duration: 0.8, width: 1.5, height: [68, 104], opacity: 0.78 },
+];
+
+const DROPS = LAYERS.flatMap((layer, li) =>
+  Array.from({ length: layer.count }, (_, i) => {
+    const seed = li * 100 + i;
+    return {
+      key: `${li}-${i}`,
+      layer: li,
+      index: i,
+      left: `${-8 + rand(seed) * 116}%`,
+      width: layer.width,
+      height:
+        layer.height[0] + rand(seed + 0.5) * (layer.height[1] - layer.height[0]),
+      opacity: layer.opacity,
+      duration: layer.duration * (0.9 + rand(seed + 1) * 0.25),
+      // delay negativo: as gotas já estão espalhadas pela tela ao carregar
+      delay: -rand(seed + 2) * layer.duration * 1.2,
+    };
+  }),
+);
 
 export function WeatherBackground({ description }: WeatherBackgroundProps) {
   const { highContrastDark } = useAppearance();
@@ -85,19 +111,30 @@ export function WeatherBackground({ description }: WeatherBackgroundProps) {
         </>
       )}
 
-      {raining &&
-        DROPS.map((drop, i) => (
-          <div
-            key={i}
-            className="animate-rain absolute -top-24 w-px bg-linear-to-b from-transparent to-sky-700/45 dark:to-white/60"
-            style={{
-              left: drop.left,
-              height: drop.height,
-              animationDelay: drop.delay,
-              animationDuration: drop.duration,
-            }}
-          />
-        ))}
+      {raining && (
+        <>
+          {DROPS.filter(
+            (d) => kind === "storm" || d.layer < 2 || d.index % 2 === 0,
+          ).map((drop) => (
+            <div
+              key={drop.key}
+              className="animate-rain absolute top-0 rounded-full bg-linear-to-b from-transparent to-sky-700 dark:to-white"
+              style={
+                {
+                  left: drop.left,
+                  width: drop.width,
+                  height: drop.height,
+                  animationDuration: `${drop.duration}s`,
+                  animationDelay: `${drop.delay}s`,
+                  "--drop-o": drop.opacity,
+                } as CSSProperties
+              }
+            />
+          ))}
+          {/* Névoa de respingos no chão */}
+          <div className="animate-mist absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-white/45 to-transparent dark:from-white/10" />
+        </>
+      )}
 
       {kind === "storm" && (
         <div className="animate-lightning absolute inset-0 bg-white/50" />

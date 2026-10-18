@@ -1,4 +1,4 @@
-import { ChevronDown, Contrast, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, MapPin, Moon, SlidersHorizontal, Sun } from "lucide-react";
 import { useAppearance } from "../hooks/useAppearance";
 import type { Location } from "../types/location";
 
@@ -13,7 +13,11 @@ export function Header({
   onOpenSearch,
   onOpenSettings,
 }: HeaderProps) {
-  const { highContrastDark, toggle } = useAppearance();
+  const { highContrastDark, theme, setTheme } = useAppearance();
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   return (
     <header className="flex items-center justify-between gap-3 pt-2">
@@ -23,20 +27,19 @@ export function Header({
         type="button"
         onClick={onOpenSearch}
         aria-label="Alterar município"
-        className="group flex min-w-0 items-center gap-1.5 rounded-2xl px-1 py-1 text-left"
+        className="glass-pill group flex h-11 min-w-0 items-center gap-2 rounded-full pr-3 pl-4"
       >
-        <span className="min-w-0">
-          <span className="block truncate text-[26px] leading-tight font-semibold tracking-tight">
-            {selectedLocation ? selectedLocation.name : "Escolher município"}
-          </span>
-          {selectedLocation && (
-            <span className="text-ink-muted block text-sm">
-              {selectedLocation.state}
-            </span>
-          )}
+        <MapPin className="h-4 w-4 shrink-0 opacity-70" aria-hidden="true" />
+        <span className="min-w-0 truncate text-base font-semibold tracking-tight">
+          {selectedLocation ? selectedLocation.name : "Escolher município"}
         </span>
+        {selectedLocation && (
+          <span className="text-ink-muted shrink-0 text-sm font-medium">
+            {selectedLocation.state}
+          </span>
+        )}
         <ChevronDown
-          className="text-ink-muted h-5 w-5 shrink-0 transition-transform group-hover:translate-y-0.5"
+          className="text-ink-muted h-4 w-4 shrink-0 transition-transform duration-300 group-hover:translate-y-0.5"
           aria-hidden="true"
         />
       </button>
@@ -44,17 +47,23 @@ export function Header({
       <div className="flex shrink-0 items-center gap-2.5">
         <button
           type="button"
-          aria-pressed={highContrastDark}
-          aria-label={
-            highContrastDark ? "Desativar alto contraste" : "Ativar alto contraste"
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          disabled={highContrastDark}
+          aria-label={isDark ? "Mudar para tema claro" : "Mudar para tema escuro"}
+          title={
+            highContrastDark
+              ? "Desative o alto contraste nas opções para trocar o tema"
+              : isDark
+                ? "Tema claro"
+                : "Tema escuro"
           }
-          title={highContrastDark ? "Modo claro" : "Modo escuro de alto contraste"}
-          onClick={toggle}
-          className={`flex h-11 w-11 items-center justify-center rounded-full ${
-            highContrastDark ? "glass-active" : "glass-pill"
-          }`}
+          className="glass-pill flex h-11 w-11 items-center justify-center rounded-full"
         >
-          <Contrast className="h-5 w-5" aria-hidden="true" />
+          {isDark ? (
+            <Sun className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <Moon className="h-5 w-5" aria-hidden="true" />
+          )}
         </button>
 
         <button

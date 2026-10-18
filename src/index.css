@@ -312,21 +312,39 @@ body {
   animation: blob-float 34s ease-in-out infinite;
 }
 
-@keyframes rain-drop {
+/* Cai ao longo do próprio ângulo (12°): deslocamento X = -tan(12°) * Y */
+@keyframes rain-fall {
   0% {
-    transform: translateY(-120%) rotate(12deg);
+    transform: translate3d(0, -20vh, 0) rotate(12deg);
     opacity: 0;
   }
-  25% {
-    opacity: 0.8;
+  8% {
+    opacity: var(--drop-o, 0.6);
+  }
+  88% {
+    opacity: var(--drop-o, 0.6);
   }
   100% {
-    transform: translateY(125vh) rotate(12deg);
-    opacity: 0.1;
+    transform: translate3d(-27vh, 110vh, 0) rotate(12deg);
+    opacity: 0;
   }
 }
 .animate-rain {
-  animation: rain-drop 1s linear infinite;
+  animation: rain-fall 1s linear infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes mist-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.animate-mist {
+  animation: mist-pulse 6s ease-in-out infinite;
 }
 
 @keyframes cloud-move-slow {
