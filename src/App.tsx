@@ -12,14 +12,12 @@ import { findCurrentMunicipality } from "./services/locationService";
 import { weatherProvider } from "./services/weatherService";
 import type { Location } from "./types/location";
 
-// Município padrão quando não é possível obter a localização da pessoa.
 const DEFAULT_LOCATION: Location = {
-  name: "Rio do Sul",
-  state: "SC",
-  ibgeCode: "4214805",
+  name: import.meta.env.VITE_DEFAULT_LOCATION_NAME,
+  state: import.meta.env.VITE_DEFAULT_LOCATION_STATE,
+  ibgeCode: import.meta.env.VITE_DEFAULT_LOCATION_IBGE,
 };
 
-// Tempo máximo procurando a localização da pessoa antes de usar o padrão.
 const LOCATION_TIMEOUT_MS = 2000;
 
 const sourceLabel = weatherProvider === "inmet" ? "INMET" : "Open-Meteo";
@@ -27,6 +25,7 @@ const sourceLabel = weatherProvider === "inmet" ? "INMET" : "Open-Meteo";
 function AppContent() {
   const { pageClass, mutedTextClass } = useAppearance();
   const search = useMunicipalitySearch();
+  const { select } = search;
   const { weather, isLoading, error, retry } = useWeather(
     search.selectedLocation,
   );
@@ -39,7 +38,6 @@ function AppContent() {
     selectedRef.current = search.selectedLocation;
   }, [search.selectedLocation]);
 
-  // Ao abrir: usa a localização da pessoa; se não houver, Rio do Sul (SC).
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -58,40 +56,34 @@ function AppContent() {
           }),
         ]);
       } catch {
-        // Permissão negada, fora do Brasil, falha ou mais de 2s: usa o padrão.
+        // permission denied
       }
 
-      // Não sobrescreve se a pessoa já escolheu um município enquanto isso.
       if (!selectedRef.current) {
-        await search.select(location);
+        await select(location);
       }
 
       setIsResolvingDefault(false);
     }
 
     void loadDefaultLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [select]);
 
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   return (
     <div className={`relative min-h-screen w-full flex flex-col ${pageClass}`}>
-      {/* Fundo Dinâmico com Gradients CSS e Animações Sutis */}
       <WeatherBackground description={weather?.current?.description ?? null} />
 
-      {/* Container Principal Mobile-First Centralizado em Telas Maiores */}
       <main className="mx-auto flex-1 w-full max-w-md px-4 py-4 flex flex-col justify-between">
         <div className="space-y-4">
-          {/* 1. Header (Localização clicável + Contraste + Menu de Opções) */}
           <Header
             selectedLocation={search.selectedLocation}
             onOpenSearch={() => setIsSearchModalOpen(true)}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
           />
 
-          {/* 2 a 5. Conteúdo Meteorológico (Clima Atual, Horária, Detalhes, 5 Dias) */}
           <WeatherReport
             hasSelection={search.selectedLocation !== null}
             weather={weather}
@@ -102,7 +94,6 @@ function AppContent() {
           />
         </div>
 
-        {/* Rodapé com Atribuição OpenStreetMap (Preservado fielmente) */}
         <footer className={`mt-10 mb-4 text-center text-xs ${mutedTextClass}`}>
           Geocodificação ©{" "}
           <a
@@ -116,7 +107,6 @@ function AppContent() {
         </footer>
       </main>
 
-      {/* Modal de Busca de Cidades (Design Liquid Glass) */}
       <SearchModal
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
@@ -124,7 +114,6 @@ function AppContent() {
         sourceLabel={sourceLabel}
       />
 
-      {/* Modal de Configurações (Acessibilidade, Tema, Visão Detalhada) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}

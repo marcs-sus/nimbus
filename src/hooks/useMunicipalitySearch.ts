@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   findCurrentMunicipality,
   resolveMunicipalityCoordinates,
@@ -34,7 +34,7 @@ export function useMunicipalitySearch(): MunicipalitySearch {
   const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function search() {
+  const search = useCallback(async () => {
     const term = query.trim();
 
     if (term.length < 2) {
@@ -60,9 +60,9 @@ export function useMunicipalitySearch(): MunicipalitySearch {
     } finally {
       setIsSearching(false);
     }
-  }
+  }, [query]);
 
-  async function select(location: Location) {
+  const select = useCallback(async (location: Location) => {
     setIsSelecting(true);
     setError(null);
     setSelectedLocation(null);
@@ -84,9 +84,9 @@ export function useMunicipalitySearch(): MunicipalitySearch {
     } finally {
       setIsSelecting(false);
     }
-  }
+  }, []);
 
-  async function locate() {
+  const locate = useCallback(async () => {
     setIsLocating(true);
     setError(null);
     setResults([]);
@@ -104,20 +104,34 @@ export function useMunicipalitySearch(): MunicipalitySearch {
     } finally {
       setIsLocating(false);
     }
-  }
+  }, []);
 
-  return {
-    query,
-    setQuery,
-    results,
-    selectedLocation,
-    isSearching,
-    isSelecting,
-    isLocating,
-    isBusy: isSearching || isSelecting || isLocating,
-    error,
-    search,
-    select,
-    locate,
-  };
+  return useMemo(
+    () => ({
+      query,
+      setQuery,
+      results,
+      selectedLocation,
+      isSearching,
+      isSelecting,
+      isLocating,
+      isBusy: isSearching || isSelecting || isLocating,
+      error,
+      search,
+      select,
+      locate,
+    }),
+    [
+      query,
+      results,
+      selectedLocation,
+      isSearching,
+      isSelecting,
+      isLocating,
+      error,
+      search,
+      select,
+      locate,
+    ],
+  );
 }
