@@ -1,4 +1,10 @@
-import { ChevronDown, MapPin, Moon, SlidersHorizontal, Sun } from "lucide-react";
+import {
+  ChevronDown,
+  MapPin,
+  Moon,
+  SlidersHorizontal,
+  Sun,
+} from "lucide-react";
 import { useAppearance } from "../hooks/useAppearance";
 import type { Location } from "../types/location";
 
@@ -49,7 +55,9 @@ export function Header({
           type="button"
           onClick={() => setTheme(isDark ? "light" : "dark")}
           disabled={highContrastDark}
-          aria-label={isDark ? "Mudar para tema claro" : "Mudar para tema escuro"}
+          aria-label={
+            isDark ? "Mudar para tema claro" : "Mudar para tema escuro"
+          }
           title={
             highContrastDark
               ? "Desative o alto contraste nas opções para trocar o tema"

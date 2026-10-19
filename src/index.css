@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* `dark:` passa a responder à classe .dark (aplicada pelo AppearanceProvider) */
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -14,7 +13,12 @@
   --divider: rgba(11, 46, 82, 0.1);
 
   font-family:
-    "SF Pro Display", "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    "SF Pro Display",
+    "Inter",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
     sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -231,7 +235,7 @@ body {
   background: linear-gradient(90deg, #5db4f5, #1f78d1);
 }
 
-/* ---------- Tema escuro: cinza neutro ---------- */
+/* ---------- Dark Theme ---------- */
 .dark .glass-input:focus {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -253,7 +257,7 @@ body {
   background: linear-gradient(90deg, #71717a, #f4f4f5);
 }
 
-/* ---------- Alto contraste: sem blur, cores sólidas ---------- */
+/* ---------- High Contrast ---------- */
 .high-contrast .glass,
 .high-contrast .glass-strong,
 .high-contrast .glass-pill,
@@ -292,7 +296,7 @@ body {
   background: #000;
 }
 
-/* ---------- Animações de clima (CSS puro) ---------- */
+/* ---------- Animations ---------- */
 @keyframes blob-float {
   0%,
   100% {
@@ -312,7 +316,6 @@ body {
   animation: blob-float 34s ease-in-out infinite;
 }
 
-/* Cai ao longo do próprio ângulo (12°): deslocamento X = -tan(12°) * Y */
 @keyframes rain-fall {
   0% {
     transform: translate3d(0, -20vh, 0) rotate(12deg);
@@ -493,7 +496,9 @@ body {
 }
 
 .range-fill {
-  transition: width 0.7s ease, left 0.7s ease;
+  transition:
+    width 0.7s ease,
+    left 0.7s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

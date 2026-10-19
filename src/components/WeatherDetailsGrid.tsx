@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowUp, CalendarDays, Droplets, Gauge, Sunrise, Wind } from "lucide-react";
+import {
+  ArrowUp,
+  CalendarDays,
+  Droplets,
+  Gauge,
+  Sunrise,
+  Wind,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useAppearance } from "../hooks/useAppearance";
 import { useEasedValue } from "../hooks/useEasedValue";
@@ -38,7 +45,6 @@ const WIND_DEGREES: Record<string, number> = {
   noroeste: 315,
 };
 
-/** Direção de onde o vento sopra, em graus, ou null se não reconhecida. */
 function windDegrees(direction: string | null): number | null {
   if (!direction) return null;
 
@@ -98,7 +104,9 @@ export function WeatherDetailsGrid({ current }: WeatherDetailsGridProps) {
             current.minRelativeHumidityPercent,
             current.maxRelativeHumidityPercent,
           )}
-          aside={humidityAvg !== null ? <WaveGauge percent={humidityAvg} /> : null}
+          aside={
+            humidityAvg !== null ? <WaveGauge percent={humidityAvg} /> : null
+          }
           surfaceClass={surfaceClass}
           mutedTextClass={mutedTextClass}
         />
@@ -168,7 +176,6 @@ function DetailCard({
 }
 
 function WindCompass({ degrees }: { degrees: number }) {
-  // O vento "vem de" `degrees`; a seta aponta para onde ele sopra.
   const angle = useEasedValue((degrees + 180) % 360, 1400);
 
   return (
@@ -219,7 +226,12 @@ interface SunCardProps {
   mutedTextClass: string;
 }
 
-function SunCard({ sunrise, sunset, surfaceClass, mutedTextClass }: SunCardProps) {
+function SunCard({
+  sunrise,
+  sunset,
+  surfaceClass,
+  mutedTextClass,
+}: SunCardProps) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {

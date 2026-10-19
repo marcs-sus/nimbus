@@ -30,7 +30,9 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
 
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.theme) as ThemeMode | null;
+      const saved = localStorage.getItem(
+        STORAGE_KEYS.theme,
+      ) as ThemeMode | null;
       if (saved === "light" || saved === "dark" || saved === "system") {
         return saved;
       }
@@ -42,7 +44,9 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
 
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.viewMode) as ViewMode | null;
+      const saved = localStorage.getItem(
+        STORAGE_KEYS.viewMode,
+      ) as ViewMode | null;
       if (saved === "simple" || saved === "detailed") {
         return saved;
       }
@@ -54,7 +58,9 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
 
   const [fontSize, setFontSizeState] = useState<FontSizeScale>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEYS.fontSize) as FontSizeScale | null;
+      const saved = localStorage.getItem(
+        STORAGE_KEYS.fontSize,
+      ) as FontSizeScale | null;
       if (saved === "sm" || saved === "base" || saved === "lg") {
         return saved;
       }
@@ -139,7 +145,6 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
     });
   }, []);
 
-  // Efeito para sincronizar classe `dark` no documento
   useEffect(() => {
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -176,12 +181,13 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
     return () => mediaQuery.removeEventListener("change", listener);
   }, [theme, highContrastDark]);
 
-  // Efeito para sincronizar a classe de alto contraste (remove blur no CSS)
   useEffect(() => {
-    document.documentElement.classList.toggle("high-contrast", highContrastDark);
+    document.documentElement.classList.toggle(
+      "high-contrast",
+      highContrastDark,
+    );
   }, [highContrastDark]);
 
-  // Efeito para sincronizar tamanho da fonte
   useEffect(() => {
     const root = document.documentElement;
     if (fontSize === "sm") {
@@ -199,7 +205,8 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
       return {
         highContrastDark: true,
         toggle,
-        pageClass: "bg-black text-white selection:bg-white selection:text-black",
+        pageClass:
+          "bg-black text-white selection:bg-white selection:text-black",
         surfaceClass: "border-2 border-white bg-black text-white shadow-none",
         mutedTextClass: "text-slate-100 font-medium",
         theme,
@@ -212,17 +219,16 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
         increaseFontSize,
         decreaseFontSize,
         isGlassEnabled,
-        glassSurfaceClass: "border-2 border-white bg-black text-white shadow-none",
+        glassSurfaceClass:
+          "border-2 border-white bg-black text-white shadow-none",
       };
     }
 
     return {
       highContrastDark: false,
       toggle,
-      pageClass:
-        "text-ink selection:bg-sky-300/60",
-      surfaceClass:
-        "glass",
+      pageClass: "text-ink selection:bg-sky-300/60",
+      surfaceClass: "glass",
       mutedTextClass: "text-ink-muted",
       theme,
       setTheme,
@@ -234,8 +240,7 @@ export function AppearanceProvider({ children }: AppearanceProviderProps) {
       increaseFontSize,
       decreaseFontSize,
       isGlassEnabled,
-      glassSurfaceClass:
-        "glass",
+      glassSurfaceClass: "glass",
     };
   }, [
     highContrastDark,

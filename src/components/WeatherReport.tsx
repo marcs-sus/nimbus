@@ -33,7 +33,8 @@ export function WeatherReport({
         >
           <h2 className="text-xl font-semibold">Qual município?</h2>
           <p className={`mt-2 max-w-xs text-base ${mutedTextClass}`}>
-            Busque um município ou use sua localização para consultar a previsão.
+            Busque um município ou use sua localização para consultar a
+            previsão.
           </p>
 
           {onOpenSearch && (

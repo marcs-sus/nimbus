@@ -58,7 +58,6 @@ export function ForecastList({ forecast }: ForecastListProps) {
   );
 }
 
-// Alias para atender o nome mencionado no plan.md
 export const DailyForecastList = ForecastList;
 
 interface ForecastDayRowProps {
@@ -107,7 +106,10 @@ function ForecastDayRow({ day, weekMin, weekMax }: ForecastDayRowProps) {
         <span className="range-track relative h-1.5 w-16 shrink-0 rounded-full">
           <span
             className="range-fill absolute inset-y-0 rounded-full"
-            style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%` }}
+            style={{
+              left: `${left}%`,
+              width: `${Math.min(width, 100 - left)}%`,
+            }}
           />
         </span>
 
@@ -118,7 +120,9 @@ function ForecastDayRow({ day, weekMin, weekMax }: ForecastDayRowProps) {
 
       <div
         className={`grid transition-[grid-template-rows,opacity] duration-500 ease-out ${
-          isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          isExpanded
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
         }`}
         aria-hidden={!isExpanded}
       >

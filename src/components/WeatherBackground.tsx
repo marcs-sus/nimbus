@@ -22,7 +22,6 @@ function getKind(description: string | null): Kind {
 
 const KINDS: Kind[] = ["clear", "clouds", "rain", "storm", "fog"];
 
-// Tema claro: quanto pior o tempo, mais escuro. Tema escuro: quanto pior, mais claro.
 const GRADIENTS: Record<Kind, string> = {
   clear:
     "from-[#f6fbff] via-[#cfeaff] to-[#8fcdf8] dark:from-[#131315] dark:via-[#1b1b1e] dark:to-[#242427]",
@@ -34,13 +33,11 @@ const GRADIENTS: Record<Kind, string> = {
     "from-[#bccddd] via-[#8fadc8] to-[#6d8fb0] dark:from-[#2a2a2f] dark:via-[#35353b] dark:to-[#414148]",
 };
 
-// Pseudo-aleatório determinístico (sem Math.random durante o render)
 const rand = (n: number) => {
   const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
 };
 
-// Três camadas de profundidade: longe (lenta, fraca) -> perto (rápida, forte)
 const LAYERS = [
   { count: 30, duration: 1.8, width: 1, height: [24, 42], opacity: 0.28 },
   { count: 22, duration: 1.2, width: 1, height: [42, 68], opacity: 0.5 },
@@ -57,10 +54,10 @@ const DROPS = LAYERS.flatMap((layer, li) =>
       left: `${-8 + rand(seed) * 116}%`,
       width: layer.width,
       height:
-        layer.height[0] + rand(seed + 0.5) * (layer.height[1] - layer.height[0]),
+        layer.height[0] +
+        rand(seed + 0.5) * (layer.height[1] - layer.height[0]),
       opacity: layer.opacity,
       duration: layer.duration * (0.9 + rand(seed + 1) * 0.25),
-      // delay negativo: as gotas já estão espalhadas pela tela ao carregar
       delay: -rand(seed + 2) * layer.duration * 1.2,
     };
   }),
@@ -86,7 +83,6 @@ export function WeatherBackground({ description }: WeatherBackgroundProps) {
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
       aria-hidden="true"
     >
-      {/* Camadas de degradê com crossfade suave entre climas */}
       {KINDS.map((k) => (
         <div
           key={k}
@@ -95,7 +91,6 @@ export function WeatherBackground({ description }: WeatherBackgroundProps) {
           }`}
         />
       ))}
-      {/* Massas fluidas: dão o que refratar ao vidro */}
       <div className="animate-blob-a absolute -top-28 -left-28 h-[28rem] w-[28rem] rounded-full bg-white/75 blur-3xl dark:bg-white/[0.06]" />
       <div className="animate-blob-b absolute top-1/3 -right-36 h-[26rem] w-[26rem] rounded-full bg-sky-300/60 blur-3xl dark:bg-white/[0.05]" />
       <div className="animate-blob-c absolute -bottom-36 left-1/4 h-[30rem] w-[30rem] rounded-full bg-sky-200/80 blur-3xl dark:bg-zinc-300/[0.06]" />
@@ -131,7 +126,6 @@ export function WeatherBackground({ description }: WeatherBackgroundProps) {
               }
             />
           ))}
-          {/* Névoa de respingos no chão */}
           <div className="animate-mist absolute inset-x-0 bottom-0 h-48 bg-linear-to-t from-white/45 to-transparent dark:from-white/10" />
         </>
       )}

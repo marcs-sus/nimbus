@@ -23,7 +23,8 @@ export function getWeatherIcon(
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-  if (/tempestade|trovoada|raio/.test(text)) return <CloudLightning {...props} />;
+  if (/tempestade|trovoada|raio/.test(text))
+    return <CloudLightning {...props} />;
   if (/chuvisco|garoa/.test(text)) return <CloudDrizzle {...props} />;
   if (/chuva|chuvoso|pancada/.test(text)) return <CloudRain {...props} />;
   if (/nevoeiro|nevoa/.test(text)) return <CloudFog {...props} />;

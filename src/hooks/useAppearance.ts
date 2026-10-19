@@ -5,14 +5,12 @@ export type ViewMode = "simple" | "detailed";
 export type FontSizeScale = "sm" | "base" | "lg";
 
 export interface Appearance {
-  // Propriedades originais (preservadas e essenciais)
   highContrastDark: boolean;
   toggle: () => void;
   pageClass: string;
   surfaceClass: string;
   mutedTextClass: string;
 
-  // Novas propriedades conforme plan.md (Tema, Visão, Acessibilidade)
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
   viewMode: ViewMode;

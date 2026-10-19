@@ -150,7 +150,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   aria-checked={theme === item.value}
                   onClick={() => setTheme(item.value)}
                   className={`flex items-center justify-center gap-1.5 rounded-full py-2.5 text-sm font-medium transition-all ${
-                    theme === item.value ? "glass-active" : "border border-transparent"
+                    theme === item.value
+                      ? "glass-active"
+                      : "border border-transparent"
                   }`}
                 >
                   {item.icon}

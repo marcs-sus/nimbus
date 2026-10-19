@@ -40,7 +40,10 @@ export function HourlyCarousel({ current }: HourlyCarouselProps) {
       aria-labelledby="hourly-heading"
       className={`animate-fade-up rounded-[28px] p-4 ${surfaceClass}`}
     >
-      <h2 id="hourly-heading" className="text-ink-muted mb-2 px-1 text-sm font-medium">
+      <h2
+        id="hourly-heading"
+        className="text-ink-muted mb-2 px-1 text-sm font-medium"
+      >
         Próximas horas
       </h2>
 
@@ -49,14 +52,20 @@ export function HourlyCarousel({ current }: HourlyCarouselProps) {
           <div
             key={slot.timeLabel}
             className={`flex min-w-[62px] shrink-0 flex-col items-center gap-2.5 rounded-2xl px-2 py-3 ${
-              index === 0 ? "glass-active" : "transition-colors duration-300 hover:bg-white/30 dark:hover:bg-white/10"
+              index === 0
+                ? "glass-active"
+                : "transition-colors duration-300 hover:bg-white/30 dark:hover:bg-white/10"
             }`}
           >
             <span className="text-sm font-medium">{slot.timeLabel}</span>
-            <span className={index === 0 ? "" : "text-sky-600 dark:text-zinc-100"}>
+            <span
+              className={index === 0 ? "" : "text-sky-600 dark:text-zinc-100"}
+            >
               {getWeatherIcon(current.description, slot.isNight, "h-6 w-6")}
             </span>
-            <span className="text-base font-semibold">{shortTemp(slot.temp)}</span>
+            <span className="text-base font-semibold">
+              {shortTemp(slot.temp)}
+            </span>
           </div>
         ))}
       </div>

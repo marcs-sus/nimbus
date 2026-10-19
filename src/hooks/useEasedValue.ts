@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Anima suavemente (ease-out) de um valor para o próximo.
- * Respeita `prefers-reduced-motion`.
- */
 export function useEasedValue(target: number, duration = 1200): number {
   const [value, setValue] = useState(0);
   const fromRef = useRef(0);
 
   useEffect(() => {
     const from = fromRef.current;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
     const total = reduce ? 0 : duration;
     const start = performance.now();
     let raf = 0;

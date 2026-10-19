@@ -10,7 +10,6 @@ interface CurrentWeatherCardProps {
 export function CurrentWeatherCard({ current }: CurrentWeatherCardProps) {
   const { viewMode } = useAppearance();
 
-  // O INMET não informa temperatura pontual; usa-se a máxima do período.
   const temp = current.temperatureC ?? current.maxTemperatureC;
   const animatedTemp = useEasedValue(temp ?? 0, 1400);
 
